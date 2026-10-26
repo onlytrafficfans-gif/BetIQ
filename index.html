@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BetIQ — Market intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">B</span><span>bet<span>iq</span></span></div>
+        <div class="workspace-label">WORKSPACE <span class="live-dot"></span></div>
+        <nav>
+          <button class="nav-item active" data-view="dashboard"><span>◈</span> Dashboard</button>
+          <button class="nav-item" data-view="markets"><span>⌁</span> Market scanner <b>12</b></button>
+          <button class="nav-item" data-view="portfolio"><span>◫</span> Portfolio</button>
+          <button class="nav-item" data-view="research"><span>⌕</span> Research queue</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="integrity-card"><span class="shield">✓</span><div><strong>Integrity mode</strong><small>Unknowns stay unknown</small></div><i></i></div>
+          <button class="nav-item"><span>⚙</span> Settings</button>
+          <div class="user"><span class="avatar">JD</span><div><strong>Jordan Davis</strong><small>Pro workspace</small></div><span>•••</span></div>
+        </div>
+      </aside>
+      <main>
+        <header class="topbar"><div><span class="eyebrow">MONDAY · OCT 26, 2026</span><h1 id="page-title">Decision dashboard</h1></div><div class="top-actions"><div class="sync"><span class="pulse"></span> Data synced 2m ago</div><button class="icon-btn">⌕</button><button class="profile-btn">JD</button></div></header>
+        <section class="content" id="app"></section>
+      </main>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
