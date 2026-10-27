@@ -7,3 +7,35 @@ document.querySelector('.composer').onsubmit=e=>{e.preventDefault();const input=
 const open=()=>{document.querySelector('.chat-menu').classList.add('open');document.querySelector('.menu-backdrop').classList.add('open')};const close=()=>{document.querySelector('.chat-menu').classList.remove('open');document.querySelector('.menu-backdrop').classList.remove('open')};document.querySelector('.menu-button').onclick=open;document.querySelector('.close-menu').onclick=close;document.querySelector('.menu-backdrop').onclick=close;async function openMarkets(){close();document.querySelector('.welcome').style.display='none';document.querySelector('.quick-actions').style.display='none';messages.innerHTML=`<section class="market-browser"><div class="market-browser-head"><span class="kicker">LIVE MARKETS</span><h2>Real events from TheSportsDB</h2><p>Events and schedules are live. Odds are not included by this provider.</p></div><div id="live-events" class="live-events"><div class="market-empty"><strong>Loading live events…</strong><span>Fetching today’s verified event feed.</span></div></div><div class="market-setup"><span class="kicker">AI SETUP</span><h3>Analyze a real event</h3><p>Select an event above, then connect an odds provider when you want sportsbook lines.</p><button class="screen-btn" data-ai-setup>Choose an event</button><small>Requires a connected live data provider.</small></div></section>`;try{const date=new Date().toISOString().slice(0,10);const r=await fetch('https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d='+date);const data=await r.json();const events=(data.events||[]).slice(0,40);document.querySelector('#live-events').innerHTML=events.length?events.map(e=>`<button class="live-event" data-event="${(e.strEvent||'Event').replace(/"/g,'&quot;')}"><span class="event-sport">${e.strSport||'Sport'}</span><span><strong>${e.strEvent||'Unnamed event'}</strong><small>${e.strLeague||'Schedule'} · ${e.strTime||e.dateEvent||'Time pending'}</small></span><b>›</b></button>`).join(''):`<div class="market-empty"><strong>No events returned</strong><span>The provider returned no events for today.</span></div>`;document.querySelectorAll('.live-event').forEach(b=>b.onclick=()=>setupMarket(b.dataset.event));}catch(e){document.querySelector('#live-events').innerHTML='<div class="market-empty"><strong>Provider unavailable</strong><span>Could not load TheSportsDB right now. Try again shortly.</span></div>';}}
 function setupMarket(market){messages.innerHTML=`<section class="market-browser"><button class="back-markets" onclick="openMarkets()">‹ Back to markets</button><span class="kicker">LIVE SETUP</span><h2>${market}</h2><p class="screen-sub">Tell Cha-Ching what to optimize for, then connect live data for a real analysis.</p><div class="setup-card"><label>Market focus<select><option>Best overall value</option><option>Lower risk</option><option>Highest expected edge</option><option>Player performance</option></select></label><label>Risk preference<select><option>Balanced</option><option>Conservative</option><option>Aggressive</option></select></label><button class="screen-btn" data-run-ai>Run AI analysis</button></div><div class="market-empty"><strong>Waiting for live data</strong><span>No recommendation will be generated until lines and source timestamps are available.</span></div></section>`;document.querySelector('[data-run-ai]').onclick=e=>{e.currentTarget.textContent='Connect provider to analyze';};}
 document.querySelectorAll('.menu-item').forEach(b=>b.onclick=()=>{b.dataset.feature==='Markets'?openMarkets():(close(),send(`Open ${b.dataset.feature}`));});
+
+// Keep the market screen fresh while it is open. The repository stores the app,
+// while this feed is intentionally fetched at runtime so saved code cannot go stale.
+let marketRefreshTimer;
+async function openMarkets(){
+  close();
+  clearInterval(marketRefreshTimer);
+  document.querySelector('.welcome').style.display='none';
+  document.querySelector('.quick-actions').style.display='none';
+  messages.innerHTML=`<section class="market-browser"><div class="market-browser-head"><span class="kicker">LIVE MARKETS</span><h2>Real events from TheSportsDB</h2><p>Events refresh automatically every 60 seconds. Odds are not included by this provider.</p><button class="screen-btn market-refresh" type="button">Refresh now</button><small class="market-updated" aria-live="polite">Waiting for provider…</small></div><div id="live-events" class="live-events"><div class="market-empty"><strong>Loading live events…</strong><span>Fetching today’s verified event feed.</span></div></div><div class="market-setup"><span class="kicker">AI SETUP</span><h3>Analyze a real event</h3><p>Select an event above, then connect an odds provider when you want sportsbook lines.</p><button class="screen-btn" data-ai-setup>Choose an event</button><small>Requires a connected live data provider.</small></div></section>`;
+  const refresh=async()=>{
+    const list=document.querySelector('#live-events');
+    const stamp=document.querySelector('.market-updated');
+    if(!list)return;
+    try{
+      const date=new Date().toISOString().slice(0,10);
+      const response=await fetch('https://www.thesportsdb.com/api/v1/json/123/eventsday.php?d='+date,{cache:'no-store'});
+      if(!response.ok)throw new Error('provider response '+response.status);
+      const data=await response.json();
+      const events=(data.events||[]).slice(0,40);
+      list.innerHTML=events.length?events.map(e=>`<button class="live-event" data-event="${(e.strEvent||'Event').replace(/"/g,'&quot;')}"><span class="event-sport">${e.strSport||'Sport'}</span><span><strong>${e.strEvent||'Unnamed event'}</strong><small>${e.strLeague||'Schedule'} · ${e.strTime||e.dateEvent||'Time pending'}</small></span><b>›</b></button>`).join(''):`<div class="market-empty"><strong>No events returned</strong><span>The provider returned no events for today.</span></div>`;
+      list.querySelectorAll('.live-event').forEach(b=>b.onclick=()=>setupMarket(b.dataset.event));
+      if(stamp)stamp.textContent='Updated '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+    }catch(error){
+      list.innerHTML='<div class="market-empty"><strong>Provider unavailable</strong><span>Could not load TheSportsDB right now. Try again shortly.</span></div>';
+      if(stamp)stamp.textContent='Refresh failed — try again';
+    }
+  };
+  document.querySelector('.market-refresh').onclick=refresh;
+  await refresh();
+  marketRefreshTimer=setInterval(refresh,60000);
+}
